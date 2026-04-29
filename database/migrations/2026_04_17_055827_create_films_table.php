@@ -9,17 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('films', function (Blueprint $table) {
-    $table->id();
-    $table->string('judul');
-    $table->string('thumbnail');
-    $table->integer('durasi'); // dalam menit
-    $table->text('deskripsi');
-    $table->timestamps();
-});
-    }
+public function up()
+{
+    Schema::create('films', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('category_id')->constrained()->onDelete('cascade'); // Menghubungkan ke tabel categories
+        $table->string('judul');
+        $table->string('thumbnail');
+        $table->integer('durasi');
+        $table->text('deskripsi');
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.

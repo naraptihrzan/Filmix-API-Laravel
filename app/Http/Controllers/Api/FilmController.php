@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Validator;
 
 class FilmController extends Controller
 {
-    // [GET] Mengambil semua data film
+    // [GET] Mengambil semua data film beserta kategorinya
     public function index()
     {
-        $films = Film::all();
+        // Menggunakan with('category') agar data kategori ikut terbawa (Eager Loading)
+        $films = Film::with('category')->get();
+        
         return response()->json([
             "status" => true,
             "message" => "Daftar semua film",
@@ -23,11 +25,16 @@ class FilmController extends Controller
     // [POST] Menambahkan film baru
     public function store(Request $request)
     {
+        // Cek apakah user yang login adalah admin
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Hanya Admin yang boleh tambah film'], 403);
+        }
         $validator = Validator::make($request->all(), [
-            'judul' => 'required',
-            'thumbnail' => 'required',
-            'durasi' => 'required|integer',
-            'deskripsi' => 'required'
+            'category_id' => 'required|exists:categories,id', // Validasi id kategori harus ada di tabel categories
+            'judul'       => 'required',
+            'thumbnail'   => 'required',
+            'durasi'      => 'required|integer',
+            'deskripsi'   => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -35,6 +42,10 @@ class FilmController extends Controller
         }
 
         $film = Film::create($request->all());
+        
+        // Memuat ulang relasi kategori setelah film dibuat agar responnya lengkap
+        $film->load('category');
+
         return response()->json([
             "status" => true,
             "message" => "Film berhasil ditambahkan",
@@ -45,7 +56,9 @@ class FilmController extends Controller
     // [GET] Mengambil detail satu film berdasarkan ID
     public function show($id)
     {
-        $film = Film::find($id);
+        // Mencari film beserta kategorinya
+        $film = Film::with('category')->find($id);
+        
         if (!$film) {
             return response()->json(["status" => false, "message" => "Film tidak ditemukan"], 404);
         }
@@ -65,7 +78,19 @@ class FilmController extends Controller
             return response()->json(["status" => false, "message" => "Film tidak ditemukan"], 404);
         }
 
+        // Tambahkan validasi category_id jika data tersebut ikut diubah
+        $validator = Validator::make($request->all(), [
+            'category_id' => 'sometimes|exists:categories,id',
+            'durasi'      => 'sometimes|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(["status" => false, "message" => $validator->errors()], 422);
+        }
+
         $film->update($request->all());
+        $film->load('category');
+
         return response()->json([
             "status" => true,
             "message" => "Data film berhasil diperbarui",
