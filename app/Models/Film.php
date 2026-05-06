@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Film extends Model
 {
-    protected $fillable = ['category_id', 'judul', 'thumbnail', 'durasi', 'deskripsi'];
+    protected $fillable = [
+    'category_id', 
+    'judul', 
+    'thumbnail', 
+    'video_url', // Tambahkan ini
+    'durasi', 
+    'deskripsi', 
+    'tahun_rilis' // Tambahkan ini
+];
 
     // Relasi: Film ini dimiliki oleh sebuah Kategori
     public function category(): BelongsTo

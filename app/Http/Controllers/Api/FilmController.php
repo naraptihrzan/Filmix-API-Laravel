@@ -9,32 +9,38 @@ use Illuminate\Support\Facades\Validator;
 
 class FilmController extends Controller
 {
-    // [GET] Mengambil semua data film beserta kategorinya
-    public function index()
+    // [GET] Mengambil semua data film (Sekarang Mendukung Fitur Search)
+    public function index(Request $request)
     {
-        // Menggunakan with('category') agar data kategori ikut terbawa (Eager Loading)
-        $films = Film::with('category')->get();
+        $query = Film::with('category');
+
+        // Fitur Search: Cek apakah ada parameter 'search' di URL
+        if ($request->has('search')) {
+            $searchTerm = $request->search;
+            $query->where('judul', 'LIKE', "%$searchTerm%");
+        }
+
+        $films = $query->get();
         
         return response()->json([
             "status" => true,
-            "message" => "Daftar semua film",
+            "message" => "Daftar film berhasil dimuat",
+            "count" => $films->count(),
             "data" => $films
         ], 200);
     }
 
-    // [POST] Menambahkan film baru
+    // [POST] Menambahkan film baru (Ditambah video_url & tahun_rilis)
     public function store(Request $request)
     {
-        // Cek apakah user yang login adalah admin
-        if ($request->user()->role !== 'admin') {
-            return response()->json(['message' => 'Hanya Admin yang boleh tambah film'], 403);
-        }
         $validator = Validator::make($request->all(), [
-            'category_id' => 'required|exists:categories,id', // Validasi id kategori harus ada di tabel categories
-            'judul'       => 'required',
-            'thumbnail'   => 'required',
+            'category_id' => 'required|exists:categories,id',
+            'judul'       => 'required|string',
+            'thumbnail'   => 'required|string',
+            'video_url'   => 'required|url', // Validasi URL Video (Penting untuk Streaming)
             'durasi'      => 'required|integer',
-            'deskripsi'   => 'required'
+            'deskripsi'   => 'required',
+            'tahun_rilis' => 'nullable|integer'
         ]);
 
         if ($validator->fails()) {
@@ -42,13 +48,11 @@ class FilmController extends Controller
         }
 
         $film = Film::create($request->all());
-        
-        // Memuat ulang relasi kategori setelah film dibuat agar responnya lengkap
         $film->load('category');
 
         return response()->json([
             "status" => true,
-            "message" => "Film berhasil ditambahkan",
+            "message" => "Film berhasil ditambahkan ke database",
             "data" => $film
         ], 201);
     }
@@ -56,7 +60,6 @@ class FilmController extends Controller
     // [GET] Mengambil detail satu film berdasarkan ID
     public function show($id)
     {
-        // Mencari film beserta kategorinya
         $film = Film::with('category')->find($id);
         
         if (!$film) {
@@ -78,10 +81,11 @@ class FilmController extends Controller
             return response()->json(["status" => false, "message" => "Film tidak ditemukan"], 404);
         }
 
-        // Tambahkan validasi category_id jika data tersebut ikut diubah
         $validator = Validator::make($request->all(), [
             'category_id' => 'sometimes|exists:categories,id',
+            'video_url'   => 'sometimes|url',
             'durasi'      => 'sometimes|integer',
+            'tahun_rilis' => 'sometimes|integer'
         ]);
 
         if ($validator->fails()) {
@@ -109,7 +113,7 @@ class FilmController extends Controller
         $film->delete();
         return response()->json([
             "status" => true,
-            "message" => "Film berhasil dihapus"
+            "message" => "Film berhasil dihapus dari sistem"
         ], 200);
     }
 }
