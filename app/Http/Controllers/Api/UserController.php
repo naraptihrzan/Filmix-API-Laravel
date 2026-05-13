@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage; // Tambahkan ini untuk manajemen file
 
 class UserController extends Controller
 {
@@ -18,7 +19,7 @@ class UserController extends Controller
         ]);
     }
 
-    // [PUT/POST] Update data profile
+    // [PUT/POST] Update data profile (Sekarang Mendukung Foto)
     public function update(Request $request)
     {
         $user = $request->user(); // Mengambil user yang sedang login via token
@@ -26,11 +27,28 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name'     => 'sometimes|string|max:255',
             'email'    => 'sometimes|email|unique:users,email,' . $user->id,
-            'password' => 'sometimes|min:8|confirmed', // 'confirmed' butuh input password_confirmation
+            'password' => 'sometimes|min:8|confirmed',
+            'foto'     => 'sometimes|image|mimes:jpg,png,jpeg|max:2048', // Validasi foto: max 2MB
         ]);
 
         if ($validator->fails()) {
             return response()->json(["status" => false, "message" => $validator->errors()], 422);
+        }
+
+        // --- Logika Update Foto Profil ---
+        if ($request->hasFile('foto')) {
+            // 1. Hapus foto lama jika ada (opsional, agar storage tidak penuh)
+            if ($user->foto) {
+                Storage::delete('public/profiles/' . $user->foto);
+            }
+
+            // 2. Simpan foto baru
+            $file = $request->file('foto');
+            $nama_file = time() . "_" . $file->getClientOriginalName();
+            $file->storeAs('public/profiles', $nama_file);
+            
+            // 3. Simpan nama file ke database
+            $user->foto = $nama_file;
         }
 
         // Update Nama & Email

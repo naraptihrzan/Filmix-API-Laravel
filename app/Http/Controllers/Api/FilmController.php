@@ -9,18 +9,33 @@ use Illuminate\Support\Facades\Validator;
 
 class FilmController extends Controller
 {
-    // [GET] Mengambil semua data film (Sekarang Mendukung Fitur Search)
+    // [GET] Mengambil data film dengan Fitur Search & Filter Canggih
     public function index(Request $request)
     {
+        $search = $request->query('search');
+        $categoryId = $request->query('category_id');
+
         $query = Film::with('category');
 
-        // Fitur Search: Cek apakah ada parameter 'search' di URL
-        if ($request->has('search')) {
-            $searchTerm = $request->search;
-            $query->where('judul', 'LIKE', "%$searchTerm%");
+        // 1. Filter berdasarkan Category ID (Jika user pilih kategori tertentu di UI)
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
         }
 
-        $films = $query->get();
+        // 2. Fitur Search: Mencari di Judul, Deskripsi, atau Nama Kategori
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('judul', 'LIKE', "%$search%")
+                  ->orWhere('deskripsi', 'LIKE', "%$search%")
+                  // Mencari berdasarkan nama kategori (Relasi)
+                  ->orWhereHas('category', function($catQuery) use ($search) {
+                      $catQuery->where('name', 'LIKE', "%$search%");
+                  });
+            });
+        }
+
+        // Urutkan dari yang terbaru (Opsional, biar lebih rapi)
+        $films = $query->orderBy('created_at', 'desc')->get();
         
         return response()->json([
             "status" => true,
@@ -30,14 +45,14 @@ class FilmController extends Controller
         ], 200);
     }
 
-    // [POST] Menambahkan film baru (Ditambah video_url & tahun_rilis)
+    // [POST] Menambahkan film baru
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'category_id' => 'required|exists:categories,id',
             'judul'       => 'required|string',
             'thumbnail'   => 'required|string',
-            'video_url'   => 'required|url', // Validasi URL Video (Penting untuk Streaming)
+            'video_url'   => 'required|url',
             'durasi'      => 'required|integer',
             'deskripsi'   => 'required',
             'tahun_rilis' => 'nullable|integer'
@@ -52,12 +67,12 @@ class FilmController extends Controller
 
         return response()->json([
             "status" => true,
-            "message" => "Film berhasil ditambahkan ke database",
+            "message" => "Film berhasil ditambahkan",
             "data" => $film
         ], 201);
     }
 
-    // [GET] Mengambil detail satu film berdasarkan ID
+    // [GET] Detail satu film
     public function show($id)
     {
         $film = Film::with('category')->find($id);
@@ -68,12 +83,12 @@ class FilmController extends Controller
 
         return response()->json([
             "status" => true,
-            "message" => "Detail film ditemukan",
+            "message" => "Detail ditemukan",
             "data" => $film
         ], 200);
     }
 
-    // [PUT] Memperbarui data film
+    // [PUT] Update data film
     public function update(Request $request, $id)
     {
         $film = Film::find($id);
@@ -97,12 +112,12 @@ class FilmController extends Controller
 
         return response()->json([
             "status" => true,
-            "message" => "Data film berhasil diperbarui",
+            "message" => "Film diperbarui",
             "data" => $film
         ], 200);
     }
 
-    // [DELETE] Menghapus film
+    // [DELETE] Hapus film
     public function destroy($id)
     {
         $film = Film::find($id);
@@ -113,7 +128,7 @@ class FilmController extends Controller
         $film->delete();
         return response()->json([
             "status" => true,
-            "message" => "Film berhasil dihapus dari sistem"
+            "message" => "Film berhasil dihapus"
         ], 200);
     }
 }

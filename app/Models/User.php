@@ -24,6 +24,15 @@ class User extends Authenticatable
         'role', // <--- 3. Tambahkan role agar bisa diisi saat register
     ];
 
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute() {
+    if ($this->foto) {
+        return asset('storage/profiles/' . $this->foto);
+    }
+    return asset('images/default-avatar.png'); // Sediakan foto default di folder public/images
+}
+
     /**
      * The attributes that should be hidden for serialization.
      *
