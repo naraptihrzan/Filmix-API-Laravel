@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FilmController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\BookmarkController; 
 use App\Http\Controllers\Api\UserController; // Pastikan ini sudah terimpor
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Bookmark
     Route::get('/bookmarks', [BookmarkController::class, 'index']);
     Route::post('/bookmarks/toggle', [BookmarkController::class, 'toggleBookmark']);
+
+    // History
+    Route::get('/history', [HistoryController::class, 'index']);
+    Route::post('/history', [HistoryController::class, 'store']);
 
     // --- FITUR BARU: Profile ---
     Route::get('/user/me', [UserController::class, 'me']);       // Ambil data profil saya
