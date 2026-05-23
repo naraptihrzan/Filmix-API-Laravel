@@ -43,4 +43,35 @@ class HistoryController extends Controller
             'data' => $history
         ]);
     }
+
+    // Fungsi Hapus Satu History
+    public function destroy($id)
+    {
+        $history = History::where('user_id', auth()->id())->find($id);
+
+        if (!$history) {
+            return response()->json([
+                'success' => false,
+                'message' => 'History tidak ditemukan atau bukan milik Anda'
+            ], 404);
+        }
+
+        $history->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'History berhasil dihapus'
+        ]);
+    }
+
+    // Fungsi Hapus SEMUA History
+    public function clearAll()
+    {
+        History::where('user_id', auth()->id())->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Semua history berhasil dikosongkan'
+        ]);
+    }
 }
