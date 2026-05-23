@@ -36,6 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // History
     Route::get('/history', [HistoryController::class, 'index']);
     Route::post('/history', [HistoryController::class, 'store']);
+    Route::delete('/history/{id}', [HistoryController::class, 'destroy']);
+    Route::delete('/history-all', [HistoryController::class, 'clearAll']);
 
     // --- FITUR BARU: Profile ---
     Route::get('/user/me', [UserController::class, 'me']);       // Ambil data profil saya
