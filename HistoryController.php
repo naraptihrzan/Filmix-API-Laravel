@@ -44,33 +44,34 @@ class HistoryController extends Controller
         ]);
     }
 
-    // Fungsi Hapus Satu History
+    // Menghapus SATU riwayat tontonan berdasarkan ID history
     public function destroy($id)
     {
-        $history = History::where('user_id', auth()->id())->find($id);
-
+        $history = History::where('user_id', auth()->id())
+                      ->where('id', $id)
+                      ->first();
+        
         if (!$history) {
             return response()->json([
-                'success' => false,
+                'success' => false, 
                 'message' => 'History tidak ditemukan atau bukan milik Anda'
             ], 404);
         }
 
         $history->delete();
-
         return response()->json([
-            'success' => true,
+            'success' => true, 
             'message' => 'History berhasil dihapus'
         ]);
     }
 
-    // Fungsi Hapus SEMUA History
+    // Menghapus SEMUA riwayat tontonan user yang sedang login
     public function clearAll()
     {
         History::where('user_id', auth()->id())->delete();
-
+        
         return response()->json([
-            'success' => true,
+            'success' => true, 
             'message' => 'Semua history berhasil dikosongkan'
         ]);
     }
