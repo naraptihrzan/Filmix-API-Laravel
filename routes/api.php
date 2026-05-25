@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\HistoryController;
 use App\Http\Controllers\BookmarkController; 
 use App\Http\Controllers\Api\UserController; // Pastikan ini sudah terimpor
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\NotificationController;
 
 // --- Public Routes (Bisa diakses tanpa login) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -36,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // History
     Route::get('/history', [HistoryController::class, 'index']);
     Route::post('/history', [HistoryController::class, 'store']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications', [NotificationController::class, 'store']);
+
 
     // --- FITUR BARU: Profile ---
     Route::get('/user/me', [UserController::class, 'me']);       // Ambil data profil saya
