@@ -43,7 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications', [NotificationController::class, 'store']);
-
+    // Ambil notifikasi urut terbaru, satu per satu
+    Route::get('/notifications/paginated', [NotificationController::class, 'paginated']);
 
     // --- FITUR BARU: Profile ---
     Route::get('/user/me', [UserController::class, 'me']);       // Ambil data profil saya

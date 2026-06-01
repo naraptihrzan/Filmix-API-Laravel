@@ -21,4 +21,21 @@ class NotificationController extends Controller
         ]);
         return response()->json(['data' => $notification], 201);
     }
+
+    public function paginated(Request $request)
+    {
+        $perPage = $request->query('per_page', 1);
+
+        $notifications = Notification::latest() // otomatis urut created_at desc
+        ->paginate($perPage);
+
+        return response()->json([
+        'data'         => $notifications->items(),
+        'current_page' => $notifications->currentPage(),
+        'total'        => $notifications->total(),
+        'has_more'     => $notifications->hasMorePages(),
+        ]);
+    }
+
+
 }
