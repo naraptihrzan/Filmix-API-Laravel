@@ -8,28 +8,67 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    // GET /api/categories
+    /**
+     * Get all categories
+     * GET /api/categories
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index()
     {
-        $categories = Category::all();
-        return response()->json([
-            "status" => true,
-            "message" => "List Kategori",
-            "data" => $categories
-        ], 200);
+        try {
+            $categories = Category::all();
+            
+            return response()->json([
+                "status" => true,
+                "message" => "List Kategori",
+                "data" => $categories
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Gagal mengambil data kategori",
+                "error" => $e->getMessage()
+            ], 500);
+        }
     }
 
-    // POST /api/categories
+    /**
+     * Create new category
+     * POST /api/categories
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
-        $category = Category::create([
-            'name' => $request->name
-        ]);
+        try {
+            // Validate input
+            $request->validate([
+                'name' => 'required|string|max:255'
+            ]);
 
-        return response()->json([
-            "status" => true,
-            "message" => "Kategori berhasil ditambahkan",
-            "data" => $category
-        ], 201); // 201 artinya Created
+            $category = Category::create([
+                'name' => $request->name
+            ]);
+
+            return response()->json([
+                "status" => true,
+                "message" => "Kategori berhasil ditambahkan",
+                "data" => $category
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Validasi gagal",
+                "errors" => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Gagal menambahkan kategori",
+                "error" => $e->getMessage()
+            ], 500);
+        }
     }
 }
